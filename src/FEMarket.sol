@@ -25,6 +25,8 @@ contract FEMarket {
 
     mapping(address => market) Markets;
 
+    mapping(address => uint256) RateModels;
+
     address[] public entered;
 
     constructor (uint32 _reserveFee, uint256 _rateModel, address _chainlinkAggregator, address[] memory _entered) {
@@ -35,7 +37,7 @@ contract FEMarket {
     }
 
     function interestRateModel(address underlying) external view returns (uint) {
-        return (rateModel);
+        return (RateModels[underlying]);
     }
 
     function activateMarket(address underlying, int96 _interestRate) external returns (address) {
@@ -90,5 +92,9 @@ contract FEMarket {
 
     function setInterestRate(address underlying, int96 _interestRate) external {
         InterestRates[underlying] = _interestRate;
+    }
+
+    function setRateModel(address underlying, uint256 _rateModel) external {
+        RateModels[underlying] = _rateModel;
     }
 }
