@@ -73,5 +73,4 @@ contract FDToken is ERC20 {
     function changeDebtAllowance(uint256 newAllowance) external {
         debtAllowance = newAllowance;
     }
-
 }
