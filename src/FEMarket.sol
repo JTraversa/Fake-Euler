@@ -2,6 +2,7 @@ pragma solidity >= 0.8.0;
 
 import "./Interfaces/IERC20.sol";
 import "./FEToken.sol";
+import "./FDToken.sol";
 
 // Contract expects external injection of underlying tokens in order to maintain the generation of interest for infinite deposits at a 5% APY
 // Fake Euler Token
@@ -40,7 +41,7 @@ contract FEMarket {
 
     function activateMarket(address underlying) external returns (address) {
         FEToken _FEToken = FEToken(underlying, string.concat("FE",IERC20(underlying).name()), string.concat("FE",IERC20(underlying).symbol()));
-        FEToken _DEToken = FEToken(underlying, string.concat("DE",IERC20(underlying).name()), string.concat("DE",IERC20(underlying).symbol()));
+        FDToken _DEToken = FDToken(underlying, string.concat("DE",IERC20(underlying).name()), string.concat("DE",IERC20(underlying).symbol()));
         Markets[underlying] = new market(_FEToken,_DEToken);
         eTokenstodTokens[_FEToken] = _DEToken;
     }
@@ -58,7 +59,7 @@ contract FEMarket {
     }
 
     function dTokenToUnderlying(address dToken) external view returns (address underlying) {
-        return (FEToken(eToken).underlyingAsset());
+        return (FDToken(eToken).underlyingAsset());
     }
 
     function eTokenToDToken(address eToken) external view returns (address dTokenAddr) {
