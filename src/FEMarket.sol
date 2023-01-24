@@ -8,7 +8,7 @@ import "./FDToken.sol";
 // Fake Euler Token
 contract FEMarket {
 
-    uint96 public interestRate;
+    mapping(address => int96) public InterestRates;
 
     uint32 public reserveFee;
 
@@ -27,8 +27,7 @@ contract FEMarket {
 
     address[] public entered;
 
-    constructor (uint96 _interestRate, uint32 _reserveFee, uint256 _rateModel, address _chainlinkAggregator, address[] memory _entered) {
-        interestRate = _interestRate;
+    constructor (uint32 _reserveFee, uint256 _rateModel, address _chainlinkAggregator, address[] memory _entered) {
         reserveFee = _reserveFee;
         rateModel = _rateModel;
         chainlinkAggregator = _chainlinkAggregator;
@@ -39,11 +38,12 @@ contract FEMarket {
         return (rateModel);
     }
 
-    function activateMarket(address underlying) external returns (address) {
+    function activateMarket(address underlying, int96 _interestRate) external returns (address) {
         FEToken _FEToken = new FEToken(underlying, string.concat("FE",IERC20(underlying).name()), string.concat("FE",IERC20(underlying).symbol()));
         FDToken _FDToken = new FDToken(underlying, string.concat("FD",IERC20(underlying).name()), string.concat("FD",IERC20(underlying).symbol()));
         Markets[underlying] = market(address(_FEToken), address(_FDToken));
         ETokenstoDTokens[address(_FEToken)] = address(_FDToken);
+        InterestRates[underlying] = _interestRate;
     }
 
     function underlyingToEToken(address underlying) external view returns (address) {
@@ -66,6 +66,10 @@ contract FEMarket {
         return (ETokenstoDTokens[eToken]);
     }
 
+    function interestRate(address underlying) external view returns (int96) {
+        return (InterestRates[underlying]);
+    }
+
     function getPricingConfig(address underlying) external view returns (uint16 pricingType, uint32 pricingParameters, address pricingForwarded) {
         return (uint16(1), uint32(0), address(0));
     }
@@ -82,5 +86,9 @@ contract FEMarket {
     }
 
     function exitMarket(uint subAccountId, address oldMarket) external {
+    }
+
+    function setInterestRate(address underlying, int96 _interestRate) external {
+        InterestRates[underlying] = _interestRate;
     }
 }
