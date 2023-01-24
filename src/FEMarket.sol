@@ -27,7 +27,7 @@ contract FEMarket {
 
     address[] public entered;
 
-    constructor (uint96 _interestRate, uint32 _reserveFee, uint256 _rateModel, address _chainlinkAggregator, address[] _entered) {
+    constructor (uint96 _interestRate, uint32 _reserveFee, uint256 _rateModel, address _chainlinkAggregator, address[] memory _entered) {
         interestRate = _interestRate;
         reserveFee = _reserveFee;
         rateModel = _rateModel;
@@ -40,10 +40,10 @@ contract FEMarket {
     }
 
     function activateMarket(address underlying) external returns (address) {
-        FEToken _FEToken = FEToken(underlying, string.concat("FE",IERC20(underlying).name()), string.concat("FE",IERC20(underlying).symbol()));
-        FDToken _FDToken = FDToken(underlying, string.concat("FD",IERC20(underlying).name()), string.concat("FD",IERC20(underlying).symbol()));
-        Markets[underlying] = new market(_FEToken, _FDToken);
-        eTokenstodTokens[_FEToken] = _DEToken;
+        FEToken _FEToken = new FEToken(underlying, string.concat("FE",IERC20(underlying).name()), string.concat("FE",IERC20(underlying).symbol()));
+        FDToken _FDToken = new FDToken(underlying, string.concat("FD",IERC20(underlying).name()), string.concat("FD",IERC20(underlying).symbol()));
+        Markets[underlying] = market(address(_FEToken), address(_FDToken));
+        ETokenstoDTokens[address(_FEToken)] = address(_FDToken);
     }
 
     function underlyingToEToken(address underlying) external view returns (address) {
@@ -63,11 +63,11 @@ contract FEMarket {
     }
 
     function eTokenToDToken(address eToken) external view returns (address dTokenAddr) {
-        return (eTokenstodTokens[eToken]);
+        return (ETokenstoDTokens[eToken]);
     }
 
     function getPricingConfig(address underlying) external view returns (uint16 pricingType, uint32 pricingParameters, address pricingForwarded) {
-        return (1, 0, 0);
+        return (uint16(1), uint32(0), address(0));
     }
 
     function getChainlinkPriceFeedConfig(address underlying) external view returns (address _chainlinkAggregator) {
@@ -83,5 +83,4 @@ contract FEMarket {
 
     function exitMarket(uint subAccountId, address oldMarket) external {
     }
-
 }

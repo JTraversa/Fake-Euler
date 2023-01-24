@@ -11,6 +11,10 @@ interface IERC20 {
      */
     function decimals() external view returns (uint8);
 
+    function name() external view returns (string memory);
+
+    function symbol() external view returns (string memory);
+
     /**
      * @dev Returns the amount of tokens in existence.
      */

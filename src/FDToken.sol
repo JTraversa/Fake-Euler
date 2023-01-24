@@ -25,7 +25,7 @@ contract FDToken is ERC20 {
     }
 
     function totalSupplyExact() external view returns (uint){
-        return (totalSupply * 10e9);
+        return (_totalSupply * 10e9);
     }
 
     function balanceOfExact(address user) external view returns (uint){
@@ -57,7 +57,7 @@ contract FDToken is ERC20 {
                 data
             );
 
-        if (!success) revert(RevertMsgExtractor.getRevertMsg(result));
+        if (!success) revert();
         require(IERC20(underlyingAsset).balanceOf(address(this)) >= initialBalance);
     }
     

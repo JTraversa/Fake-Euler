@@ -73,7 +73,7 @@ contract FEToken is ERC20 {
     // Mutates state and accrues interest
     function touch() public {
         uint256 diff = block.timestamp - lastTraded;
-        exchangeRate + (exchangeRate * diff/(31536000 * rateDenominator));
+        exchangeRate = exchangeRate + (exchangeRate * diff/(31536000 * rateDenominator));
     }
 
     // Deposits an amount of underlying tokens, minting eTokens
