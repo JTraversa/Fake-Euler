@@ -41,8 +41,8 @@ contract FEMarket {
 
     function activateMarket(address underlying) external returns (address) {
         FEToken _FEToken = FEToken(underlying, string.concat("FE",IERC20(underlying).name()), string.concat("FE",IERC20(underlying).symbol()));
-        FDToken _DEToken = FDToken(underlying, string.concat("DE",IERC20(underlying).name()), string.concat("DE",IERC20(underlying).symbol()));
-        Markets[underlying] = new market(_FEToken,_DEToken);
+        FDToken _FDToken = FDToken(underlying, string.concat("FD",IERC20(underlying).name()), string.concat("FD",IERC20(underlying).symbol()));
+        Markets[underlying] = new market(_FEToken, _FDToken);
         eTokenstodTokens[_FEToken] = _DEToken;
     }
 
