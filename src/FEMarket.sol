@@ -59,7 +59,7 @@ contract FEMarket {
     }
 
     function dTokenToUnderlying(address dToken) external view returns (address underlying) {
-        return (FDToken(eToken).underlyingAsset());
+        return (FDToken(dToken).underlyingAsset());
     }
 
     function eTokenToDToken(address eToken) external view returns (address dTokenAddr) {
@@ -70,7 +70,7 @@ contract FEMarket {
         return (1, 0, 0);
     }
 
-    function getChainlinkPriceFeedConfig(address underlying) external view returns (address chainlinkAggregator) {
+    function getChainlinkPriceFeedConfig(address underlying) external view returns (address _chainlinkAggregator) {
         return (chainlinkAggregator);
     }
 
