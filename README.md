@@ -1,2 +1,2 @@
 # Fake-Euler
- A Fake Euler Protocol
+ A Fake Euler Protocol for development purposes
