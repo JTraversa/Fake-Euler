@@ -1,15 +1,14 @@
-pragma solidity >= 0.8.0;
+pragma solidity >=0.8.0;
 
-import "./ERC/ERC20.sol";
-import "./Interfaces/IERC20.sol";
+import './ERC/ERC20.sol';
+import './Interfaces/IERC20.sol';
 
 // Contract expects external injection of underlying tokens in order to maintain the generation of interest for infinite deposits at a 5% APY
 // Fake Euler Token
 contract FEToken is ERC20 {
+    uint256 public immutable underlyingDecimals;
 
-    uint256 immutable public underlyingDecimals;
-
-    address immutable public underlyingAsset;
+    address public immutable underlyingAsset;
 
     uint256 public exchangeRate = 1000000000000000000;
 
@@ -21,18 +20,27 @@ contract FEToken is ERC20 {
     // @param n name
     // @param s symbol
     // @comment always 18 decimals
-    constructor (address u, string memory n, string memory s) ERC20(n, s, 18) {
+    constructor(
+        address u,
+        string memory n,
+        string memory s
+    ) ERC20(n, s, 18) {
         underlyingDecimals = IERC20(u).decimals();
         underlyingAsset = u;
+        lastTraded = block.timestamp;
     }
 
     // Total supply of the underlying asset
-    function totalSupplyUnderlying() external view returns (uint) {
+    function totalSupplyUnderlying() external view returns (uint256) {
         return IERC20(underlyingAsset).totalSupply();
     }
 
     // Converts balanceOf an accounts shares into underlying
-    function balanceOfUnderlying(address account) external view returns (uint) {
+    function balanceOfUnderlying(address account)
+        external
+        view
+        returns (uint256)
+    {
         return convertBalanceToUnderlying(_balanceOf[account]);
     }
 
@@ -42,16 +50,22 @@ contract FEToken is ERC20 {
     function convertUnderlyingToBalance(uint256 _assets)
         public
         view
-        returns (uint256 shares) {
-            uint256 diff = block.timestamp - lastTraded;
-            if (diff != 0) {
-                uint256 tempExchangeRate = exchangeRate + (exchangeRate * diff/(31536000 * rateDenominator));
-                return (_assets / ((tempExchangeRate / (1*10^(18 + underlyingDecimals - decimals)))));
-            }
-            else {
-                return (_assets / ((exchangeRate / (1*10^(18 + underlyingDecimals - decimals)))));
-            }
+        returns (uint256 shares)
+    {
+        uint256 diff = block.timestamp - lastTraded;
+        if (diff != 0) {
+            uint256 tempExchangeRate = exchangeRate +
+                ((exchangeRate * diff) / (31536000 * rateDenominator));
+
+            shares =
+                (_assets * (10**(18 + decimals - underlyingDecimals))) /
+                tempExchangeRate;
+        } else {
+            shares =
+                (_assets * (10**(18 + decimals - underlyingDecimals))) /
+                exchangeRate;
         }
+    }
 
     // Converts an amount of eToken shares to underlying assets
     // Does not mutate state
@@ -59,65 +73,70 @@ contract FEToken is ERC20 {
     function convertBalanceToUnderlying(uint256 _shares)
         public
         view
-        returns (uint256 assets) {
-            uint256 diff = block.timestamp - lastTraded;
-            if (diff != 0 ) {
-                uint256 tempExchangeRate = exchangeRate + (exchangeRate * diff/(31536000 * rateDenominator));
-                return (_shares * ((tempExchangeRate / (1*10^(18 + underlyingDecimals - decimals)))));
-            }
-            else {
-                return (_shares * ((exchangeRate / (1*10^(18 + underlyingDecimals - decimals)))));
-            } 
+        returns (uint256 assets)
+    {
+        uint256 diff = block.timestamp - lastTraded;
+        if (diff != 0) {
+            uint256 tempExchangeRate = exchangeRate +
+                ((exchangeRate * diff) / (31536000 * rateDenominator));
+            assets =
+                (_shares * tempExchangeRate) /
+                (10**(18 + decimals - underlyingDecimals));
+        } else {
+            assets =
+                (_shares * exchangeRate) /
+                (10**(18 + decimals - underlyingDecimals));
+        }
     }
 
     // Mutates state and accrues interest
     function touch() public {
         uint256 diff = block.timestamp - lastTraded;
-        exchangeRate = exchangeRate + (exchangeRate * diff/(31536000 * rateDenominator));
+        if (diff != 0){
+            exchangeRate = exchangeRate +
+            ((exchangeRate * diff) / (31536000 * rateDenominator));
+        }
+        lastTraded = block.timestamp;
     }
 
     // Deposits an amount of underlying tokens, minting eTokens
     // @param subAccountId unused euler param
     // @param amount an amount of underlying tokens
-    function deposit(uint subAccountId, uint amount) external {
+    function deposit(uint256 subAccountId, uint256 amount) external {
         touch();
         uint256 shares = convertUnderlyingToBalance(amount);
         IERC20(underlyingAsset).transferFrom(msg.sender, address(this), amount);
         _mint(msg.sender, shares);
-        lastTraded = block.timestamp;
     }
 
     // Withdraws an amount of underlying, burning eTokens
     // @param subAccountId unused euler param
     // @param amount an amount of underlying tokens
-    function withdraw(uint subAccountId, uint amount) external {
+    function withdraw(uint256 subAccountId, uint256 amount) external {
         touch();
         uint256 shares = convertUnderlyingToBalance(amount);
         IERC20(underlyingAsset).transfer(msg.sender, amount);
         _burn(msg.sender, shares);
-        lastTraded = block.timestamp;
     }
 
     // Mints an amount of eToken shares, depositing underlying tokens
     // @param subAccountId unused euler param
     // @param amount an amount of eToken shares
-    function mint(uint subAccountId, uint amount) external {
+    function mint(uint256 subAccountId, uint256 amount) external {
         touch();
         uint256 assets = convertBalanceToUnderlying(amount);
         IERC20(underlyingAsset).transferFrom(msg.sender, address(this), assets);
         _mint(msg.sender, amount);
-        lastTraded = block.timestamp;
     }
 
     // Burns an amount of eToken shares, withdrawing underlying tokens
     // @param subAccountId unused euler param
     // @param amount an amount of eToken shares
-    function burn(uint subAccountId, uint amount) external {
+    function burn(uint256 subAccountId, uint256 amount) external {
         touch();
         uint256 assets = convertBalanceToUnderlying(amount);
         IERC20(underlyingAsset).transfer(msg.sender, assets);
-        _burn(msg.sender, amount);    
-        lastTraded = block.timestamp;   
+        _burn(msg.sender, amount);
     }
 
     // Random Euler method that transfers max amount of tokens
@@ -128,8 +147,7 @@ contract FEToken is ERC20 {
             _burn(from, _balanceOf[from]);
             _mint(to, _balanceOf[from]);
             return true;
-        }
-        else {
+        } else {
             return false;
         }
     }
